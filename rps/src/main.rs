@@ -1,12 +1,12 @@
 #![allow(dead_code, unused)] // debug
+mod rps;
+use crate::rps::Player;
 /// todo:
-/// * add random selection for opponent choice
 /// * add interactive mode if no args passed
-/// * add structs for each player's choices
-/// that have ways of comparing choices to determine winner
 use clap::Parser;
-// use rand::prelude;
-// use rand::seq::IteratorRandom;
+use rand::prelude::*;
+use rand::seq::IteratorRandom;
+
 /// simple rock-paper-scissors game
 #[derive(Parser, Debug)]
 #[clap(author = "me")]
@@ -18,36 +18,38 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let player_choice: &str = args.choice;
-    let opponent_choice: &str = choose_opponent();
+    // if specified on command line
+    let player = Player::new(args.choice.to_string().to_lowercase());
+    let outcome: String = rps(player);
+    println!("{}", outcome);
 
-    let outcome: &str = rps((&player_choice, &opponent_choice))kw;
-    println!(
-        "Player picked {}, opponent picked {}",
-        player_choice, opponent_choice
-    );
-
-    match &outcome {
-        &"win" => println!("player won"),
-        &"tie" => println!("it was a tie"),
-        &"lose" => println!("player lost"),
-        _ => println!("huh?"),
-    }
+    // if not, go into interactive mode
+    // get user input to play, exit, or continue loop
+    // run rps against newest choice
+    // keep score
 }
 
-fn choose_opponent() -> &'static str {
-    // let choices = ["rock", "paper", "scissors"];
-    // let mut rng = rand::thread_rng();
-    // let opponent_choice = choices.choose(&mut rng).unwrap();
-    let opponent_choice: &str = "scissors";
-    opponent_choice
+fn rps(player: Player) -> String {
+    let opponent = Player::new(choose_opponent());
+
+    let outcome: &str = {
+        if player > opponent {
+            "player wins"
+        } else if player < opponent {
+            "opponent wins"
+        } else if player == opponent {
+            "tie"
+        } else {
+            "something went wrong"
+        }
+    };
+
+    outcome.to_string()
 }
 
-fn rps<'a>(choices: (&str, &str)) -> &'a str {
-    match choices {
-        ("rock", "rock") | ("paper", "paper") | ("scissors", "scissors") => &"tie",
-        ("paper", "rock") | ("rock", "scissors") | ("scissors", "paper") => &"win",
-        ("scissors", "rock") | ("rock", "paper") | ("paper", "scissors") => &"lose",
-        other => &"huh?",
-    }
+fn choose_opponent() -> String {
+    let choices = vec!["rock", "paper", "scissors"];
+    let mut rng = rand::thread_rng();
+    let opponent_choice = choices.choose(&mut rng).unwrap();
+    opponent_choice.to_string()
 }
