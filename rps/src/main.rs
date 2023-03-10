@@ -4,22 +4,21 @@ use crate::rps::Player;
 /// todo:
 /// * add interactive mode if no args passed
 use clap::Parser;
-use rand::prelude::*;
-use rand::seq::IteratorRandom;
 
 /// simple rock-paper-scissors game
 #[derive(Parser, Debug)]
 #[clap(author = "me")]
 struct Args {
-    /// player's choice
+    /// Player's throw for this round; can be "rock", "paper", or "scissors".
     choice: String,
 }
 
 fn main() {
     let args = Args::parse();
+    let choice: String = args.choice.to_string().to_lowercase();
 
     // if specified on command line
-    let player = Player::new(args.choice.to_string().to_lowercase());
+    let player: Player = Player::from_choice(choice);
     let outcome: String = rps(player);
     println!("{}", outcome);
 
@@ -30,9 +29,9 @@ fn main() {
 }
 
 fn rps(player: Player) -> String {
-    let opponent = Player::new(choose_opponent());
+    let opponent = Player::from_random();
 
-    let outcome: &str = {
+    let outcome: String = {
         if player > opponent {
             "player wins"
         } else if player < opponent {
@@ -42,14 +41,8 @@ fn rps(player: Player) -> String {
         } else {
             "something went wrong"
         }
-    };
+    }
+    .to_string();
 
-    outcome.to_string()
-}
-
-fn choose_opponent() -> String {
-    let choices = vec!["rock", "paper", "scissors"];
-    let mut rng = rand::thread_rng();
-    let opponent_choice = choices.choose(&mut rng).unwrap();
-    opponent_choice.to_string()
+    outcome
 }
