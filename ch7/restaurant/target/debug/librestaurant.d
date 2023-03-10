@@ -1,1 +1,1 @@
-/home/tom/repos/rust-learning/ch7/restaurant/target/debug/librestaurant.rlib: /home/tom/repos/rust-learning/ch7/restaurant/src/lib.rs
+/home/tom/repos/rust-learning/ch7/restaurant/target/debug/librestaurant.rlib: /home/tom/repos/rust-learning/ch7/restaurant/src/front_of_house/hosting.rs /home/tom/repos/rust-learning/ch7/restaurant/src/front_of_house.rs /home/tom/repos/rust-learning/ch7/restaurant/src/lib.rs
