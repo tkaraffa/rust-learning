@@ -1,11 +1,22 @@
 use rand::prelude::*;
-use rand::seq::IteratorRandom;
 use std::cmp::Ordering;
+use std::error::Error;
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
 
-#[derive(Eq)]
+#[derive(Debug, Eq)]
 pub struct Player {
-    choice: String,
+    pub choice: String,
 }
+
+impl Display for Player {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(f, "{}", self)
+    }
+}
+
+impl Error for Player {}
 
 impl Player {
     fn get_choices() -> Vec<String> {
@@ -15,33 +26,35 @@ impl Player {
             String::from("scissors"),
         ]
     }
+    pub fn bad_choice(self) -> String {
+        format!(
+            "Bad Choice: '{}'. Please choose a valid option: '{}'.",
+            self.choice,
+            Self::get_choices().join("', '")
+        )
+    }
+    pub fn get_choice(self) -> String {
+        self.choice
+    }
 
-    fn validate_choice(choice: String) -> Result<String, String> {
+    pub fn from_choice(choice: String) -> Result<Player, Player> {
         if Player::get_choices().contains(&choice) {
-            Ok(choice)
+            Ok(Player { choice: choice })
         } else {
-            Err(choice)
+            Err(Player { choice: choice })
         }
     }
 
-    pub fn from_choice(choice: String) -> Player {
-        let validated_choice: String =
-            Player::validate_choice(choice).expect("Bad Choice!");
-        Player {
-            choice: validated_choice,
-        }
-    }
-
-    pub fn from_random() -> Player {
+    pub fn from_random() -> Result<Player, Player> {
         let mut rng = rand::thread_rng();
         let random_choice =
             Player::get_choices().choose(&mut rng).unwrap().to_string();
         Player::from_choice(random_choice)
     }
 
-    pub fn new(choice: String) -> Player {
-        Player::from_choice(choice)
-    }
+    // pub fn new(choice: String) -> Result<Player, Player> {
+    //     Player::from_choice(choice)
+    // }
 }
 
 impl Ord for Player {

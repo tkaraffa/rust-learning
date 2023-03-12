@@ -1,26 +1,34 @@
-#![allow(dead_code, unused)] // debug
 mod rps;
 use crate::rps::Player;
 /// todo:
 /// * add interactive mode if no args passed
+/// * write tests
 use clap::Parser;
+use std::error::Error;
 
 /// simple rock-paper-scissors game
 #[derive(Parser, Debug)]
-#[clap(author = "me")]
+#[clap(author = "Tom Karaffa")]
 struct Args {
     /// Player's throw for this round; can be "rock", "paper", or "scissors".
     choice: String,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
     let choice: String = args.choice.to_string().to_lowercase();
 
     // if specified on command line
-    let player: Player = Player::from_choice(choice);
-    let outcome: String = rps(player);
-    println!("{}", outcome);
+
+    let player: Player =
+        Player::from_choice(choice).map_err(|e| e.bad_choice())?;
+    let opponent: Player =
+        Player::from_random().map_err(|e| e.bad_choice())?;
+
+    let outcome: String = rps(&player, &opponent);
+    println!("{outcome}");
+
+    Ok(())
 
     // if not, go into interactive mode
     // get user input to play, exit, or continue loop
@@ -28,21 +36,23 @@ fn main() {
     // keep score
 }
 
-fn rps(player: Player) -> String {
-    let opponent = Player::from_random();
-
+fn rps(player1: &Player, player2: &Player) -> String {
+    let throws: String = format!(
+        "Player 1 threw {}. Player 2 threw {}. ",
+        player1.choice, player2.choice
+    );
     let outcome: String = {
-        if player > opponent {
-            "player wins"
-        } else if player < opponent {
-            "opponent wins"
-        } else if player == opponent {
-            "tie"
+        if player1 > player2 {
+            "Player 1 wins."
+        } else if player1 < player2 {
+            "Player 2 wins."
+        } else if player1 == player2 {
+            "It was a tie."
         } else {
             "something went wrong"
         }
     }
     .to_string();
 
-    outcome
+    throws + &outcome
 }
