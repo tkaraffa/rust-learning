@@ -7,12 +7,18 @@ use std::fmt::Result as FmtResult;
 
 #[derive(Debug, Eq)]
 pub struct Player {
+    pub name: String,
     pub choice: String,
+    _private: (),
 }
 
 impl Display for Player {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        write!(f, "{}", self)
+        if self.name == String::from("Tie") {
+            write!(f, "It was a tie. Both players threw {}.", self.choice)
+        } else {
+            write!(f, "{} won. They threw {}.", self.name, self.choice)
+        }
     }
 }
 
@@ -33,28 +39,55 @@ impl Player {
             Self::get_choices().join("', '")
         )
     }
-    pub fn get_choice(self) -> String {
-        self.choice
-    }
 
-    pub fn from_choice(choice: String) -> Result<Player, Player> {
+    pub fn from_choice(
+        name: String,
+        choice: String,
+    ) -> Result<Player, Player> {
+        let _private = ();
         if Player::get_choices().contains(&choice) {
-            Ok(Player { choice: choice })
+            Ok(Player {
+                name,
+                choice,
+                _private,
+            })
         } else {
-            Err(Player { choice: choice })
+            Err(Player {
+                name,
+                choice,
+                _private,
+            })
         }
     }
 
-    pub fn from_random() -> Result<Player, Player> {
+    pub fn from_random(name: String) -> Result<Player, Player> {
         let mut rng = rand::thread_rng();
         let random_choice =
             Player::get_choices().choose(&mut rng).unwrap().to_string();
-        Player::from_choice(random_choice)
+        Player::from_choice(name, random_choice)
     }
 
-    // pub fn new(choice: String) -> Result<Player, Player> {
-    //     Player::from_choice(choice)
-    // }
+    pub fn play<'a>(&'a self, other: &'a Self) -> Self {
+        let tie: &Player = &Player {
+            name: String::from("Tie"),
+            choice: String::from(&self.choice),
+            _private: (),
+        };
+        let winner: &Player = {
+            if self > other {
+                self
+            } else if self < other {
+                other
+            } else {
+                tie
+            }
+        };
+        Player {
+            name: winner.name.to_string(),
+            choice: winner.choice.to_string(),
+            _private: (),
+        }
+    }
 }
 
 impl Ord for Player {
