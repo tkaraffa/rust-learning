@@ -1,20 +1,18 @@
 use rand::prelude::*;
 use std::cmp::Ordering;
 use std::error::Error;
-use std::fmt::Display;
-use std::fmt::Formatter;
-use std::fmt::Result as FmtResult;
+use std::fmt;
 
 #[derive(Debug, Eq)]
 pub struct Player {
     pub name: String,
     pub choice: String,
-    _private: (),
+    tie: bool,
 }
 
-impl Display for Player {
-    fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        if self.name == String::from("Tie") {
+impl fmt::Display for Player {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.tie {
             write!(f, "It was a tie. Both players threw {}.", self.choice)
         } else {
             write!(f, "{} won. They threw {}.", self.name, self.choice)
@@ -32,7 +30,8 @@ impl Player {
             String::from("scissors"),
         ]
     }
-    pub fn bad_choice(self) -> String {
+
+    pub fn bad_choice(&self) -> String {
         format!(
             "Bad Choice: '{}'. Please choose a valid option: '{}'.",
             self.choice,
@@ -40,40 +39,29 @@ impl Player {
         )
     }
 
-    pub fn from_choice(
-        name: String,
-        choice: String,
-    ) -> Result<Player, Player> {
-        let _private = ();
-        if Player::get_choices().contains(&choice) {
-            Ok(Player {
-                name,
-                choice,
-                _private,
-            })
+    pub fn from_choice(name: String, choice: String) -> Result<Self, Self> {
+        let tie: bool = false;
+        if Self::get_choices().contains(&choice) {
+            Ok(Self { name, choice, tie })
         } else {
-            Err(Player {
-                name,
-                choice,
-                _private,
-            })
+            Err(Self { name, choice, tie })
         }
     }
 
-    pub fn from_random(name: String) -> Result<Player, Player> {
+    pub fn from_random(name: String) -> Result<Self, Self> {
         let mut rng = rand::thread_rng();
         let random_choice =
-            Player::get_choices().choose(&mut rng).unwrap().to_string();
-        Player::from_choice(name, random_choice)
+            Self::get_choices().choose(&mut rng).unwrap().to_string();
+        Self::from_choice(name, random_choice)
     }
 
     pub fn play<'a>(&'a self, other: &'a Self) -> Self {
-        let tie: &Player = &Player {
+        let tie: &Self = &Self {
             name: String::from("Tie"),
             choice: String::from(&self.choice),
-            _private: (),
+            tie: true,
         };
-        let winner: &Player = {
+        let winner: &Self = {
             if self > other {
                 self
             } else if self < other {
@@ -82,10 +70,10 @@ impl Player {
                 tie
             }
         };
-        Player {
+        Self {
             name: winner.name.to_string(),
             choice: winner.choice.to_string(),
-            _private: (),
+            tie: winner.tie,
         }
     }
 }
@@ -112,17 +100,79 @@ impl PartialOrd for Player {
             | ((self.choice == "rock") & (other.choice == "scissors"))
             | ((self.choice == "scissors") & (other.choice == "paper"))
     }
-
-    fn le(&self, other: &Self) -> bool {
-        (self.choice < (other.choice)) | (self.choice == other.choice)
-    }
-    fn ge(&self, other: &Self) -> bool {
-        (self.choice > (other.choice)) | (self.choice == other.choice)
-    }
 }
 
 impl PartialEq for Player {
     fn eq(&self, other: &Self) -> bool {
         self.choice == other.choice
+    }
+}
+
+// tests
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_choice() {
+        let good_choices: Vec<&str> = vec!["rock", "paper", "scisscors"];
+        let choices: Vec<&str> =
+            vec!["bad", "rock", "other bad", "paper", "SCISSORS"];
+        for choice in choices {
+            let test_player: Result<Player, Player> = Player::from_choice(
+                String::from("Tester"),
+                String::from(choice),
+            );
+            if good_choices.contains(&choice) {
+                assert_eq!(
+                    test_player.unwrap().choice,
+                    String::from(choice).to_lowercase()
+                )
+            } else {
+                assert!(test_player.is_err())
+            };
+        }
+    }
+
+    #[test]
+    fn test_comparisons() {
+        let player1_choices: Vec<&str> = vec!["rock", "paper", "scissors"];
+        let player2: Result<Player, Player> =
+            Player::from_choice(String::from("Tester"), String::from("rock"));
+        for choice in player1_choices {
+            let player1: Result<Player, Player> = Player::from_choice(
+                String::from("Tester"),
+                String::from(choice),
+            );
+            let conditions = {
+                if choice == "rock" {
+                    (
+                        vec![player1 == player2],
+                        vec![player1 > player2, player1 < player2],
+                    )
+                } else if choice == "paper" {
+                    (
+                        vec![player1 < player2],
+                        vec![player1 == player2, player1 > player2],
+                    )
+                } else if choice == "scissors" {
+                    (
+                        vec![player1 > player2],
+                        vec![player1 == player2, player1 < player2],
+                    )
+                } else {
+                    (vec![], vec![])
+                }
+            };
+            let (trues, falses) = conditions;
+
+            for condition in trues {
+                assert!(condition);
+            }
+            for condition in falses {
+                assert!(!condition);
+            }
+        }
     }
 }
