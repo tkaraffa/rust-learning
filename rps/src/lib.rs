@@ -1,6 +1,5 @@
 use rand::prelude::*;
 use std::cmp::Ordering;
-use std::error::Error;
 use std::fmt;
 
 #[derive(Debug, Eq)]
@@ -20,9 +19,8 @@ impl fmt::Display for Player {
     }
 }
 
-impl Error for Player {}
-
 impl Player {
+    /// list all choice
     fn get_choices() -> Vec<String> {
         vec![
             String::from("rock"),
@@ -31,6 +29,7 @@ impl Player {
         ]
     }
 
+    /// handle a bad choice
     pub fn bad_choice(&self) -> String {
         format!(
             "Bad Choice: '{}'. Please choose a valid option: '{}'.",
@@ -40,11 +39,22 @@ impl Player {
     }
 
     pub fn from_choice(name: String, choice: String) -> Result<Self, Self> {
-        let tie: bool = false;
-        if Self::get_choices().contains(&choice) {
-            Ok(Self { name, choice, tie })
-        } else {
-            Err(Self { name, choice, tie })
+        let lowercase_choice = choice.to_lowercase();
+        match lowercase_choice {
+            lowercase_choice
+                if Self::get_choices().contains(&lowercase_choice) =>
+            {
+                Ok(Self {
+                    name,
+                    choice: lowercase_choice,
+                    tie: false,
+                })
+            }
+            _ => Err(Self {
+                name,
+                choice: lowercase_choice,
+                tie: false,
+            }),
         }
     }
 
@@ -61,14 +71,10 @@ impl Player {
             choice: String::from(&self.choice),
             tie: true,
         };
-        let winner: &Self = {
-            if self > other {
-                self
-            } else if self < other {
-                other
-            } else {
-                tie
-            }
+        let winner = match other {
+            other if self > other => self,
+            other if self < other => other,
+            _ => tie,
         };
         Self {
             name: winner.name.to_string(),
@@ -137,13 +143,13 @@ mod tests {
 
     #[test]
     fn test_comparisons() {
-        let player1_choices: Vec<&str> = vec!["rock", "paper", "scissors"];
+        let player1_choices: Vec<String> = Player::get_choices();
         let player2: Result<Player, Player> =
             Player::from_choice(String::from("Tester"), String::from("rock"));
         for choice in player1_choices {
             let player1: Result<Player, Player> = Player::from_choice(
                 String::from("Tester"),
-                String::from(choice),
+                String::from(&choice),
             );
             let conditions = {
                 if choice == "rock" {
@@ -162,11 +168,17 @@ mod tests {
                         vec![player1 == player2, player1 < player2],
                     )
                 } else {
-                    (vec![], vec![])
+                    (
+                        vec![],
+                        vec![
+                            player1 == player2,
+                            player1 > player2,
+                            player1 < player2,
+                        ],
+                    )
                 }
             };
             let (trues, falses) = conditions;
-
             for condition in trues {
                 assert!(condition);
             }
