@@ -1,4 +1,3 @@
-mod rps;
 /// todo:
 /// * add interactive mode if no args passed
 /// * write tests
@@ -6,7 +5,7 @@ use clap::Parser;
 use rps::Player;
 use std::error::Error;
 
-/// simple rock-paper-scissors game
+/// A simple rock-paper-scissors game
 #[derive(Parser, Debug)]
 #[clap(author = "Tom Karaffa")]
 struct Args {
@@ -16,14 +15,13 @@ struct Args {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
-    let choice: String = args.choice.to_string().to_lowercase();
+    let choice: String = args.choice;
 
     // if specified on command line
-
     let player: Player = Player::from_choice(String::from("Player"), choice)
-        .map_err(|e| e.bad_choice())?;
+        .map_err(|e: Player| e.bad_choice())?;
     let opponent: Player = Player::from_random(String::from("Computer"))
-        .map_err(|e| e.bad_choice())?;
+        .map_err(|e: Player| e.bad_choice())?;
 
     let winner: Player = player.play(&opponent);
     println!("{}", winner);
