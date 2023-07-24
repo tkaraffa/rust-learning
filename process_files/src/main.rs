@@ -1,9 +1,9 @@
 mod schema;
-use std::fs;
 use clap::Parser;
+use std::fs;
 
 use process_files::process_file;
-use schema::get_latest_schema;
+// use schema::get_latest_schema;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -11,8 +11,6 @@ struct Args {
     /// Path in which to process files
     path: String,
 }
-
-
 
 fn main() {
     let args = Args::parse();

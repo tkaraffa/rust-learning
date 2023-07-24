@@ -1,18 +1,24 @@
+use std::sync::mpsc;
 use std::thread;
-use std::time::Duration;
+use std::time::Duration; // multiple producer, single consumer
 
 fn main() {
-    let handle = thread::spawn(|| {
-        for i in 1..10 {
-            println!("hi number {} from the spawned thread!", i);
-            thread::sleep(Duration::from_millis(1000));
-        }
+    let (tx, rx) = mpsc::channel();
+    // returns a tuple
+    // tx: transmitter
+    // rx: receiver
+
+    // move tx into thread's closure
+    thread::spawn(move || {
+        thread::sleep(Duration::from_secs(1));
+
+        let val = String::from("hi");
+        tx.send(val); // send it
     });
 
-    for i in 1..5 {
-        println!("hi number {} from the main thread!", i);
-        thread::sleep(Duration::from_millis(1000));
-    }
-
-    handle.join().unwrap();
+    let received = rx.try_recv(); // receive it, block main thread, wait until value sent down channel
+    println!(
+        "Got: {}",
+        received.unwrap_or_else(|_| String::from("Error."))
+    );
 }
