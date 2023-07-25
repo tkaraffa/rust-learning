@@ -22,11 +22,13 @@ fn main() {
 
     let input_directory = fs::read_dir(input_directory).unwrap();
     for path in input_directory {
-        let json = fs::read_to_string(path.unwrap().path()).unwrap();
-        let schema = get_schema_by_version(json.clone(), schema_version);
+        let path_str = path
+            .expect("Something went wrong when reading from {input_directory}.")
+            .path();
+        let json = fs::read_to_string(path_str)
+            .expect("Something went wrong when reading file {path_str}.");
+        let schema = get_schema_by_version(json, schema_version);
         println!("{:?}", schema);
-        // let data = schema.get_data();
-        // println!("{}", data.get("key1"));
     }
 }
 /*
