@@ -16,7 +16,7 @@ pub fn get_schema_by_version(data: String, version: usize) -> Result<serde_json:
     match version {
         2 => SchemaV2::from_data(data),
         1 => SchemaV1::from_data(data),
-        _ => DefaultSchema::from_data(data),
+        _ => Ok(DefaultSchema::from_data(data)).expect_err("Nooo"),
     }
 }
 
