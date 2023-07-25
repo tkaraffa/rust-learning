@@ -51,4 +51,6 @@ so, main idea is
     * output filetype
     * which schema to use
 
+* should handle if an invalid schema is used
+
 */

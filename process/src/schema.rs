@@ -11,12 +11,14 @@ pub const CURRENT_VERSION: usize = 1;
 // all `Schema` implementing Types should have
 // a method called `from_data` that takes in a string of data
 // and returns some type of Schema
-pub fn get_schema_by_version(data: String, version: usize) -> serde_json::Value {
-    let schema = match version {
-        1 => SchemaV1::from_data(data),
-        _ => DefaultSchema::from_data(data),
-    };
-    schema
+pub fn get_schema_by_version(
+    data: String,
+    version: usize,
+) -> Result<serde_json::Value, serde_json::Value> {
+    match version {
+        1 => Ok(SchemaV1::from_data(data)),
+        _ => Err(DefaultSchema::from_data(data)),
+    }
 }
 
 pub trait Schema {
