@@ -1,7 +1,9 @@
+mod process;
 mod schema;
 use clap::Parser;
 use std::fs;
 
+use process::ThreadPool;
 use schema::{get_schema_by_version, CURRENT_VERSION};
 
 #[derive(Parser, Debug)]
@@ -15,29 +17,43 @@ struct Args {
     schema_version: usize,
 }
 
-fn main() {
+fn main() -> Result<(), String> {
     let args = Args::parse();
     let input_directory = args.input_directory;
     let schema_version: usize = args.schema_version;
 
-    let input_directory = fs::read_dir(input_directory).unwrap();
+    let pool = ThreadPool::new(50);
+
+    let input_directory = fs::read_dir(input_directory)
+        .expect("Something went wrong when reading from {input_directory");
+
     for path in input_directory {
-        let path_str = path
-            .expect("Something went wrong when reading from {input_directory}.")
-            .path();
-        let json = fs::read_to_string(path_str)
-            .expect("Something went wrong when reading file {path_str}.");
-        let schema = get_schema_by_version(json, schema_version);
-        println!("{:?}", schema);
+        pool.execute(move || {
+            let path_str = path
+                .expect("Something went wrong when reading from {input_directory}.")
+                .path();
+            let json = fs::read_to_string(&path_str)
+                .expect("Something went wrong when reading file {path_str}.");
+            let _schema =
+                get_schema_by_version(&json, &schema_version).expect("Something went wrong");
+
+            println!("Schema processed for {:?}!", &path_str);
+        });
     }
+    Ok(())
 }
+
 /*
- THE SCHEMA TRAIT SHOULD BE A TYPE
- and there should be a ..."process" trait that uses that type
+
+other thoughts:
+* i think there's not a way to get string rep of the structure itself (with types)
+* so, if we want to have a "write this to avro", we'd have to also keep a string rep
+    of the schema as a method
+    * kind of sucks
+
 
 so, main idea is
-* have some number of schemas that dictate how the JSON data should look
-    * these might be parsed from YAML (into structs) or be structs themselves
+
 * no matter what schema is used, have some way of:
     * reading JSON file(s) from a directory
     * loading those into the appropriate struct
